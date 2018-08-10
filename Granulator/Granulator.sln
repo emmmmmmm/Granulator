@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2017
+# Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Granulator", "Granulator.csproj", "{8ECB9AEC-7706-E88D-C20E-47E339999023}"
 EndProject
 Global

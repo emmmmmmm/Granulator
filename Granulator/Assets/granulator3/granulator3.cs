@@ -82,14 +82,7 @@ public class granulator3 : MonoBehaviour
         grainVol = Clamp(grainVol, 0, 1);
         grainVolRand = Clamp(grainVolRand, 0, 1);
 
-
-
-        // grainPos: 0->1 
-        // grainPitch: 1 = no pitching
-        // grainLength: ms
-        // grainDist: ms
-        // grainVol: 0->1
-
+        
         // calculate randomized values for new grains:
         newGrainPos = (int)((grainPos + Random.Range(0, grainPosRand)) * audioClip.samples);
         newGrainPitch = grainPitch;
