@@ -34,10 +34,12 @@ public class granulator3 : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float grainRelease = .3f;    // from 0 > 1
     public bool isPlaying = true;       // the on/off button
+    //public bool updateGrainPos = true;
+
 
     public AudioClip audioClip;
     public GameObject grainPrefab;
-
+    private AudioClip lastClip;
     // tmp vars
     private int newGrainPos = 0;
     private float newGrainPitch = 0;
@@ -49,9 +51,13 @@ public class granulator3 : MonoBehaviour
     private int channels;
     private grain3[] grains; 
     private int grainTimer = 0;
-
+    private Vector3 pos;
 
     //---------------------------------------------------------------------
+    private void Start()
+    {
+        this.gameObject.AddComponent<AudioSource>();
+    }
     void Awake()
     {
         grains = new grain3[maxGrains];
@@ -61,6 +67,7 @@ public class granulator3 : MonoBehaviour
             tmp.transform.parent = this.transform;
             grains[i] = tmp.GetComponent<grain3>();
             grains[i].audioClip = audioClip;
+           // grains[i].updatePos = updateGrainPos;
         }
     }
 
@@ -69,6 +76,17 @@ public class granulator3 : MonoBehaviour
     //---------------------------------------------------------------------
     void Update()
     {
+        if (lastClip != audioClip)
+        {
+            lastClip = audioClip;
+            for (int i = 0; i < grains.Length; i++)
+            {
+                grains[i].audioClip = audioClip;
+                grains[i].UpdateGrain();
+            }
+        }
+
+
         // clamp values to reasonable ranges:
         grainPos = Clamp(grainPos, 0, 1);
         grainPosRand = Clamp(grainPosRand, 0, 1);
@@ -92,12 +110,12 @@ public class granulator3 : MonoBehaviour
 
         newGrainVol = Clamp(grainVol + Random.Range(-grainVolRand, grainVolRand), 0, 1);
 
-        // update Pitch for ALL grains
+        // update Pitch for ALL grains (?)
         for (int i = 0; i < grains.Length; i++) {
             grains[i].grainPitch = newGrainPitch;
         }
 
-
+        pos = transform.position;
 
     }
     //---------------------------------------------------------------------
@@ -114,16 +132,14 @@ public class granulator3 : MonoBehaviour
         for (int i = 0; i < data.Length; i++)
         {
             grainTimer--;
-
             int index = 0;
-
             if (grainTimer <= 0)
             {
                 while (grains[index].isPlaying && index < grains.Length - 1) index++;
                 // if there's a free grain, restart it:
                 if (index < grains.Length)
                 {
-                    grains[index].NewGrain(newGrainPos, newGrainLength, newGrainPitch,newGrainPitchRand, newGrainVol,grainAttack,grainRelease);
+                    grains[index].NewGrain(newGrainPos, newGrainLength, newGrainPitch,newGrainPitchRand, newGrainVol,grainAttack,grainRelease,pos);
                     grainTimer = newGrainDist; // reset timer
                 }
             }

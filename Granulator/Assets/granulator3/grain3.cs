@@ -25,23 +25,41 @@ public class grain3 : MonoBehaviour
     private float[] grainSamples;
     private int channels;
     private int currentIndex = -1;
+
+    private Vector3 position;
     //---------------------------------------------------------------------
     void Start()
     {
+        UpdateGrain();
+        this.gameObject.AddComponent<AudioSource>();
+        audioSource = GetComponent<AudioSource>();
+        audioSource.spatialize = true;
+        audioSource.spatialBlend = 1;
+        audioSource.clip = null;
+    }
+    //---------------------------------------------------------------------
+    public void UpdateGrain()
+    {
+
         sampleLength = audioClip.samples;
         samples = new float[audioClip.samples * audioClip.channels];
         channels = audioClip.channels;
         audioClip.GetData(samples, 0);
-        audioSource = GetComponent<AudioSource>();
     }
     //---------------------------------------------------------------------
     void Update()
     {
         audioSource.pitch = grainPitch + grainPitchRand;
         audioSource.volume = grainVol;
+        // transform.position = position;
+     /*   if (isPlaying && !audioSource.isPlaying)
+            audioSource.Play();
+        if (!isPlaying && audioSource.isPlaying)
+            audioSource.Stop();
+            */
     }
     //---------------------------------------------------------------------
-    public void NewGrain(int newGrainPos, int newGrainLength, float newGrainPitch, float newGrainPitchRand, float newGrainVol,float newGrainAttack,float newGrainRelease)
+    public void NewGrain(int newGrainPos, int newGrainLength, float newGrainPitch, float newGrainPitchRand, float newGrainVol, float newGrainAttack, float newGrainRelease, Vector3 pos)
     {
         grainPos = (int)((newGrainPos / channels)) * channels; // rounding to make sure pos always starts at first channel!
         grainLength = newGrainLength;
@@ -52,16 +70,18 @@ public class grain3 : MonoBehaviour
         grainRelease = newGrainRelease;
         isPlaying = true;
         buildSamplesAR();
+        position = pos;
+
     }
     //---------------------------------------------------------------------
     private void buildSamplesAR()
     {
-         grainSamples = new float[grainLength];
-        
+        grainSamples = new float[grainLength];
+
         int sourceIndex = grainPos;
 
         // build ar of samples for this grain:
-       
+
 
         for (int i = 0; i < grainSamples.Length - channels; i += channels)
         {
@@ -84,7 +104,7 @@ public class grain3 : MonoBehaviour
             for (int j = 0; j < channels; j++)
             {
                 if (i < grainSamples.Length * grainAttack) grainSamples[i + j] *= map(i, 0, grainSamples.Length * grainAttack, 0f, 1f);
-                else if (i > grainSamples.Length * (1.0f-grainRelease)) grainSamples[i + j] *= map(i, grainSamples.Length * (1.0f - grainRelease), grainSamples.Length, 1f, 0f);
+                else if (i > grainSamples.Length * (1.0f - grainRelease)) grainSamples[i + j] *= map(i, grainSamples.Length * (1.0f - grainRelease), grainSamples.Length, 1f, 0f);
             }
 
         }
@@ -99,6 +119,7 @@ public class grain3 : MonoBehaviour
         {
             currentIndex = -1;
             isPlaying = false;
+
         }
         currentIndex++;
         return grainSamples[currentIndex];
@@ -110,12 +131,15 @@ public class grain3 : MonoBehaviour
     {
         for (int i = 0; i < data.Length; i += channels)
         {
-            if (isPlaying)
-                for (int c = 0; c < channels; c++)
-                {
-                    data[i + c] += getNextSample(i, c);
-                    //if (data[i + c] > 1) data[i + c] = 1; // "limiter" ^^
-                }
+
+            for (int c = 0; c < channels; c++)
+            {
+                // mult with all ones data ar to get spacialization. should work, BUT that gives me glitches... 
+                //idk if my wav file's just bogded or ..?
+                if (isPlaying)  data[i + c] = getNextSample(i, c);
+                else            data[i + c] = 0;
+                //if (data[i + c] > 1) data[i + c] = 1; // "limiter" ^^
+            }
         }
     }
 
