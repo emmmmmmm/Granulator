@@ -15,23 +15,29 @@ using UnityEngine;
 public class Granulator : MonoBehaviour
 {
     public int maxGrains = 10;
+    [Range(0.0f, 1000f)]
     public int grainLength = 100;       // ms
+    [Range(0.0f, 1000f)]
     public int grainLengthRand = 0;     // ms
     [Range(0.0f, 1.0f)]
     public float grainPos = 0;          // from 0 > 1
     [Range(0.0f, 1.0f)]
     public float grainPosRand = 0;      // from 0 > 1
+    [Range(0.0f, 1000f)]
     public int grainDist = 10;          // ms
+    [Range(0.0f, 1000f)]
     public int grainDistRand = 0;       // ms
-    public float grainPitch = 1;        
+    [Range(0.0f, 5f)]
+    public float grainPitch = 1;
+    [Range(0.0f, 1f)]
     public float grainPitchRand = 0;
     [Range(0.0f, 2.0f)]
     public float grainVol = 1;          // from 0 > 1
     [Range(0.0f, 1.0f)]
     public float grainVolRand = 0;      // from 0 > 1
-    [Range(0.0f, 1.0f)]
+    [Range(0.0f, 0.5f)]
     public float grainAttack = .3f;     // from 0 > 1
-    [Range(0.0f, 1.0f)]
+    [Range(0.0f, 0.5f)]
     public float grainRelease = .3f;    // from 0 > 1
     public bool isPlaying = true;       // the on/off button
     //public bool updateGrainPos = true;
@@ -53,18 +59,20 @@ public class Granulator : MonoBehaviour
     private int grainTimer = 0;
     private Vector3 pos;
 
+    public bool moveGrains = true;
+
     //---------------------------------------------------------------------
     private void Start()
     {
         this.gameObject.AddComponent<AudioSource>();
     }
+
     void Awake()
     {
         grains = new Grain[maxGrains];
         for (int i = 0; i < grains.Length; i++)
         {
-            GameObject tmp = Instantiate(grainPrefab, this.transform);
-            tmp.transform.parent = this.transform;
+            GameObject tmp = Instantiate(grainPrefab); //, this.transform);
             grains[i] = tmp.GetComponent<Grain>();
             grains[i].audioClip = audioClip;
            // grains[i].updatePos = updateGrainPos;
@@ -113,9 +121,14 @@ public class Granulator : MonoBehaviour
         // update Pitch for ALL grains (?)
         for (int i = 0; i < grains.Length; i++) {
             grains[i].grainPitch = newGrainPitch;
+            if(moveGrains || !grains[i].isPlaying)grains[i].transform.position = transform.position;
         }
 
         pos = transform.position;
+
+
+
+
 
     }
     //---------------------------------------------------------------------

@@ -58,7 +58,7 @@ public class Spatializer : MonoBehaviour
         // might be able to do that in OAFR, bc I'm only reading transforms? -> test! -> nope. :/
 
         // TODO: is there a way to do this without having to set pitch on the noise-gen every frame?? 
-        if (doppler) GetComponent<AudioSource>().pitch += Mathf.Clamp((dopplerAmount - (toListener.sqrMagnitude / prevToListener.sqrMagnitude) * dopplerAmount), -0.5f, 5f);
+        if (doppler) GetComponent<AudioSource>().pitch += Mathf.Clamp((dopplerAmount - (toListener.sqrMagnitude / prevToListener.sqrMagnitude) * dopplerAmount), -3f, 3f);
         prevToListener = toListener;
     }
 
