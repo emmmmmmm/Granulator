@@ -41,7 +41,7 @@ public class Granulator : MonoBehaviour
     public float grainRelease = .3f;    // from 0 > 1
     public bool isPlaying = true;       // the on/off button
     //public bool updateGrainPos = true;
-
+    
 
     public AudioClip audioClip;
     public GameObject grainPrefab;
@@ -60,6 +60,59 @@ public class Granulator : MonoBehaviour
     private Vector3 pos;
 
     public bool moveGrains = true;
+
+
+    //public Vector2 grainField = new Vector2(10, 10);
+
+
+    // define field:
+    public Vector3 A = Vector3.zero;
+    public Vector3 B = Vector3.zero;
+    public Vector3 C = Vector3.zero;
+    public Vector3 D = Vector3.zero;
+
+    public float pos3DJit = 3;
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+
+        Gizmos.DrawLine(A, B);
+        Gizmos.DrawLine(B, C);
+        Gizmos.DrawLine(C, D);
+        Gizmos.DrawLine(D, A);
+    /*
+        Vector3 grainField3D = new Vector3(grainField.x, 0, grainField.y);
+        Gizmos.DrawLine(Vector3.zero, new Vector3(grainField3D.x, 0, 0));
+        Gizmos.DrawLine(Vector3.zero, new Vector3(0,0,grainField3D.z));
+        Gizmos.DrawLine(grainField3D, new Vector3(grainField.x, 0, 0));
+        Gizmos.DrawLine(grainField3D, new Vector3(0, 0, grainField3D.z));
+    */
+    }
+
+
+    public Vector3 GetGrainPosition()
+    {
+        Vector3 ret = Vector3.zero;
+
+        // SOMEHOW find a point inbetween A-B-C-D
+        // use random for now, and a weighted map later? NO idea how this could possibly work^^
+
+
+        // alternatively I could spawn them randomly around a "spawnpoint" ?
+
+        Vector3 jit = new Vector3(
+            Random.Range(-pos3DJit, pos3DJit),
+            Random.Range(-pos3DJit, pos3DJit),
+            Random.Range(-pos3DJit, pos3DJit)
+            ); 
+
+
+        // for now just return parent position
+        return transform.position+jit;
+
+    }
+
+
 
     //---------------------------------------------------------------------
     private void Start()
@@ -95,7 +148,7 @@ public class Granulator : MonoBehaviour
         }
 
 
-        // clamp values to reasonable ranges:
+        // clamp values to "reasonable" ranges:
         grainPos = Clamp(grainPos, 0, 1);
         grainPosRand = Clamp(grainPosRand, 0, 1);
         grainDist = (int)Clamp(grainDist, 1, 10000);
@@ -119,9 +172,14 @@ public class Granulator : MonoBehaviour
         newGrainVol = Clamp(grainVol + Random.Range(-grainVolRand, grainVolRand), 0, 3);
 
         // update Pitch for ALL grains (?)
+        // so we get instant pitch updates, and not just for newly spawned grains
         for (int i = 0; i < grains.Length; i++) {
             grains[i].grainPitch = newGrainPitch;
-            if(moveGrains || !grains[i].isPlaying)grains[i].transform.position = transform.position;
+
+            // update Grain position:
+            if(moveGrains || !grains[i].isPlaying) grains[i].UpdatePosition(GetGrainPosition());
+                
+        
         }
 
         pos = transform.position;

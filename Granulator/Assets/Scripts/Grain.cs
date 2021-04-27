@@ -21,18 +21,27 @@ public class Grain : MonoBehaviour
     private float[] grainSamples;
     private int channels;
     private int currentIndex = -1;
+    private Granulator granulator;
+
+
+    private MeshRenderer body;
+
+    public float posUpdateSpeed = 1;
 
     //---------------------------------------------------------------------
     void Start()
     {
         UpdateGrain();
-        this.gameObject.AddComponent<AudioSource>();
+        gameObject.AddComponent<AudioSource>();
         audioSource = GetComponent<AudioSource>();
         audioSource.spatialize = false;
         audioSource.spatialBlend = 0;
         audioSource.clip = null;
+        granulator = GetComponentInParent<Granulator>();
+        body = GetComponentInChildren<MeshRenderer>();
     }
     //---------------------------------------------------------------------
+    // called if audio file changes
     public void UpdateGrain()
     {
         samples = new float[audioClip.samples * audioClip.channels];
@@ -43,6 +52,10 @@ public class Grain : MonoBehaviour
     void Update()
     {
         audioSource.pitch = grainPitch + grainPitchRand;
+
+
+        if (isPlaying)  { body.enabled = true; body.gameObject.SetActive(true); }
+        else            { body.enabled = false; body.gameObject.SetActive(false); }
     }
     //---------------------------------------------------------------------
     public void NewGrain(int newGrainPos, int newGrainLength, float newGrainPitch, float newGrainPitchRand, float newGrainVol, float newGrainAttack, float newGrainRelease, Vector3 pos)
@@ -56,6 +69,16 @@ public class Grain : MonoBehaviour
         grainRelease = newGrainRelease;
         isPlaying = true;
         BuildSamplesAR();
+
+
+    }
+    //---------------------------------------------------------------------
+    public void UpdatePosition(Vector3 pos, bool lerpPos = false)
+    {
+        if (lerpPos)
+            transform.position = Vector3.Lerp(transform.position, pos, posUpdateSpeed * Time.deltaTime);
+        else
+            transform.position = pos;
     }
     //---------------------------------------------------------------------
     private void BuildSamplesAR()
@@ -99,7 +122,6 @@ public class Grain : MonoBehaviour
         {
             currentIndex = -1;
             isPlaying = false;
-
         }
         currentIndex++;
         return grainSamples[currentIndex];
