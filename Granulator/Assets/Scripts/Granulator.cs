@@ -6,11 +6,12 @@ using UnityEngine;
     TODO:
     . pause audio-sources of graines when inactive! (that should help a lot performance-wise! )
     . adjust grain-length with pitch! ... somehow
-    . add add velocity to grains, so they can move around in space!
-    . add Octaver option (to randomly generate grains with x-octaves offset! !!
-    
-
+    . add velocity to grains, so they can move around in space! -> make them movers
+    . add Octaver option (to randomly generate grains with x-octaves offset! !! <- that'd be fun i guess?
+    . add the possibility to spawn grains inside a volume, best case: use a 2d (3d?) probability-map.
  */
+
+
 
 public class Granulator : MonoBehaviour
 {
@@ -40,8 +41,8 @@ public class Granulator : MonoBehaviour
     [Range(0.0f, 0.5f)]
     public float grainRelease = .3f;    // from 0 > 1
     public bool isPlaying = true;       // the on/off button
-    //public bool updateGrainPos = true;
-    
+                                        //public bool updateGrainPos = true;
+
 
     public AudioClip audioClip;
     public GameObject grainPrefab;
@@ -53,9 +54,10 @@ public class Granulator : MonoBehaviour
     private int newGrainLength = 0;
     private int newGrainDist = 0;
     private float newGrainVol = 0;
+    private Vector3 newGrainTransform = Vector3.zero;
 
     private int channels;
-    private Grain[] grains; 
+    private Grain[] grains;
     private int grainTimer = 0;
     private Vector3 pos;
 
@@ -66,52 +68,79 @@ public class Granulator : MonoBehaviour
 
 
     // define field:
-    public Vector3 A = Vector3.zero;
-    public Vector3 B = Vector3.zero;
-    public Vector3 C = Vector3.zero;
-    public Vector3 D = Vector3.zero;
 
     public float pos3DJit = 3;
+    public float heightMapX = 10;
+    public float heightMapZ = 10;
+    public Texture2D heightmap;
+
+    //---------------------------------------------------------------------
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
+        Vector3 A = Vector3.zero;
+        Vector3 B = Vector3.right * heightMapX;
+        Vector3 C = new Vector3(heightMapX, 0, heightMapZ);
+        Vector3 D = Vector3.forward * heightMapZ;
 
         Gizmos.DrawLine(A, B);
         Gizmos.DrawLine(B, C);
         Gizmos.DrawLine(C, D);
         Gizmos.DrawLine(D, A);
-    /*
-        Vector3 grainField3D = new Vector3(grainField.x, 0, grainField.y);
-        Gizmos.DrawLine(Vector3.zero, new Vector3(grainField3D.x, 0, 0));
-        Gizmos.DrawLine(Vector3.zero, new Vector3(0,0,grainField3D.z));
-        Gizmos.DrawLine(grainField3D, new Vector3(grainField.x, 0, 0));
-        Gizmos.DrawLine(grainField3D, new Vector3(0, 0, grainField3D.z));
-    */
+
     }
 
-
+    //---------------------------------------------------------------------
     public Vector3 GetGrainPosition()
     {
-        Vector3 ret = Vector3.zero;
 
         // SOMEHOW find a point inbetween A-B-C-D
-        // use random for now, and a weighted map later? NO idea how this could possibly work^^
+
+        /*
+         https://stackoverflow.com/questions/8327776/set-pixel-on-randomized-position-depending-on-brightness-in-the-underlying-image
+         */
+
 
 
         // alternatively I could spawn them randomly around a "spawnpoint" ?
-
         Vector3 jit = new Vector3(
             Random.Range(-pos3DJit, pos3DJit),
             Random.Range(-pos3DJit, pos3DJit),
             Random.Range(-pos3DJit, pos3DJit)
-            ); 
+            );
 
 
         // for now just return parent position
-        return transform.position+jit;
+        //return transform.position+jit;
+
+
+        return GetPosFromHeightMap();
 
     }
 
+    //---------------------------------------------------------------------
+    Vector3 GetPosFromHeightMap()
+    {
+        Vector3 ret = Vector3.zero;
+        int n = 0;
+        int x, z;
+        float p;
+        while (n < (heightmap.width * heightmap.height))
+        {
+            x = (Random.Range(0,heightmap.width));
+            z = (Random.Range(0,heightmap.height));
+            p = Random.value;
+
+            if (p < heightmap.GetPixel(x, z).grayscale)
+            {
+                ret.x = heightMapX-(float) x / heightmap.width * heightMapX;
+                ret.z = heightMapZ-(float) z / heightmap.height * heightMapZ;
+                break;
+            }
+            n++;
+        }
+        return ret;
+    }
 
 
     //---------------------------------------------------------------------
@@ -128,7 +157,7 @@ public class Granulator : MonoBehaviour
             GameObject tmp = Instantiate(grainPrefab); //, this.transform);
             grains[i] = tmp.GetComponent<Grain>();
             grains[i].audioClip = audioClip;
-           // grains[i].updatePos = updateGrainPos;
+            // grains[i].updatePos = updateGrainPos;
         }
     }
 
@@ -161,9 +190,10 @@ public class Granulator : MonoBehaviour
         grainVol = Clamp(grainVol, 0, 2);
         grainVolRand = Clamp(grainVolRand, 0, 1);
 
-        
+
         // calculate randomized values for new grains:
         newGrainPos = (int)((grainPos + Random.Range(0, grainPosRand)) * audioClip.samples);
+        newGrainTransform = GetGrainPosition();
         newGrainPitch = grainPitch;
         newGrainPitchRand = Random.Range(-grainPitchRand, grainPitchRand);
         newGrainLength = (int)(audioClip.frequency / 1000 * (grainLength + Random.Range(0, grainLengthRand)));
@@ -173,13 +203,14 @@ public class Granulator : MonoBehaviour
 
         // update Pitch for ALL grains (?)
         // so we get instant pitch updates, and not just for newly spawned grains
-        for (int i = 0; i < grains.Length; i++) {
+        for (int i = 0; i < grains.Length; i++)
+        {
             grains[i].grainPitch = newGrainPitch;
 
             // update Grain position:
-            if(moveGrains || !grains[i].isPlaying) grains[i].UpdatePosition(GetGrainPosition());
-                
-        
+            if (moveGrains) grains[i].UpdatePosition(GetGrainPosition());
+
+
         }
 
         pos = transform.position;
@@ -191,7 +222,8 @@ public class Granulator : MonoBehaviour
     }
     //---------------------------------------------------------------------
     // utility func to clamp a value between min and max
-    float Clamp(float val, float min, float max) {
+    float Clamp(float val, float min, float max)
+    {
         val = val > min ? val : min;
         val = val < max ? val : max;
         return val;
@@ -210,7 +242,7 @@ public class Granulator : MonoBehaviour
                 // if there's a free grain, restart it:
                 if (index < grains.Length)
                 {
-                    grains[index].NewGrain(newGrainPos, newGrainLength, newGrainPitch,newGrainPitchRand, newGrainVol,grainAttack,grainRelease,pos);
+                    grains[index].NewGrain(newGrainTransform, newGrainPos, newGrainLength, newGrainPitch, newGrainPitchRand, newGrainVol, grainAttack, grainRelease, pos);
                     grainTimer = newGrainDist; // reset timer
                 }
             }

@@ -13,6 +13,7 @@ public class Grain : MonoBehaviour
     public float grainPitch;
     private float grainPitchRand;
     private float grainVol;
+    private Vector3 grainTransform;
     private float grainAttack = 0.1f;
     private float grainRelease = 0.1f;
     public AudioClip audioClip;
@@ -52,15 +53,15 @@ public class Grain : MonoBehaviour
     void Update()
     {
         audioSource.pitch = grainPitch + grainPitchRand;
-
-
+        transform.position = grainTransform;
         if (isPlaying)  { body.enabled = true; body.gameObject.SetActive(true); }
         else            { body.enabled = false; body.gameObject.SetActive(false); }
     }
     //---------------------------------------------------------------------
-    public void NewGrain(int newGrainPos, int newGrainLength, float newGrainPitch, float newGrainPitchRand, float newGrainVol, float newGrainAttack, float newGrainRelease, Vector3 pos)
+    public void NewGrain(Vector3 newGrainTransform, int newGrainPos, int newGrainLength, float newGrainPitch, float newGrainPitchRand, float newGrainVol, float newGrainAttack, float newGrainRelease, Vector3 pos)
     {
         grainPos = (int)((newGrainPos / channels)) * channels; // rounding to make sure pos always starts at first channel!
+        grainTransform = newGrainTransform;
         grainLength = newGrainLength;
         grainPitch = newGrainPitch;
         grainPitchRand = newGrainPitchRand;
