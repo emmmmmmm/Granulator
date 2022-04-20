@@ -27,7 +27,7 @@ public class Grain : MonoBehaviour
 
     private MeshRenderer body;
 
-    public float posUpdateSpeed = 1;
+    public float posUpdateSpeed = 10;
 
     //---------------------------------------------------------------------
     void Start()
@@ -77,9 +77,9 @@ public class Grain : MonoBehaviour
     public void UpdatePosition(Vector3 pos, bool lerpPos = false)
     {
         if (lerpPos)
-            transform.position = Vector3.Lerp(transform.position, pos, posUpdateSpeed * Time.deltaTime);
+            grainTransform = Vector3.Lerp(transform.position, pos, posUpdateSpeed * Time.deltaTime);
         else
-            transform.position = pos;
+            grainTransform = pos;
     }
     //---------------------------------------------------------------------
     private void BuildSamplesAR()

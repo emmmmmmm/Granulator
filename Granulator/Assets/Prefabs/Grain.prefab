@@ -14,7 +14,7 @@ GameObject:
   m_Layer: 0
   m_Name: Grain
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -48,7 +48,7 @@ MonoBehaviour:
   isPlaying: 0
   grainPitch: 1
   audioClip: {fileID: 0}
-  posUpdateSpeed: 1
+  posUpdateSpeed: 10
 --- !u!114 &114092474398015380
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  maxDist: 20
+  maxDist: 8
   attenuateDistance: 1
   attenuateDirection: 1
   panning: 1
