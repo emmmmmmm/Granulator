@@ -15,6 +15,7 @@ using UnityEngine;
 
 public class Granulator : MonoBehaviour
 {
+    [Header("Granular Attributes")]
     public int maxGrains = 10;
     [Range(0.0f, 1000f)]
     public int grainLength = 100;       // ms
@@ -37,9 +38,13 @@ public class Granulator : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float grainVolRand = 0;      // from 0 > 1
     [Range(0.0f, 0.5f)]
+
     public float grainAttack = .3f;     // from 0 > 1
     [Range(0.0f, 0.5f)]
     public float grainRelease = .3f;    // from 0 > 1
+
+
+    [Header("Player")]
     public bool isPlaying = true;       // the on/off button
                                         //public bool updateGrainPos = true;
 
@@ -64,30 +69,32 @@ public class Granulator : MonoBehaviour
     public bool moveGrains = true;
 
 
-    //public Vector2 grainField = new Vector2(10, 10);
 
-
-    // define field:
-
+    [Header("GrainPositionProperties")]
     public float pos3DJit = 3;
-    public float heightMapX = 10;
-    public float heightMapZ = 10;
-    public Texture2D heightmap;
+
+    [Header("Density Field - Experimental")]
+    public bool useDensityField = false;
+    public float densityfieldX = 10;
+    public float densityFieldZ = 10;
+    public Texture2D densityFieldTexture;
 
     //---------------------------------------------------------------------
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        Vector3 A = Vector3.zero;
-        Vector3 B = Vector3.right * heightMapX;
-        Vector3 C = new Vector3(heightMapX, 0, heightMapZ);
-        Vector3 D = Vector3.forward * heightMapZ;
+        if (useDensityField)
+        {
+            Gizmos.color = Color.red;
+            Vector3 A = Vector3.zero;
+            Vector3 B = Vector3.right * densityfieldX;
+            Vector3 C = new Vector3(densityfieldX, 0, densityFieldZ);
+            Vector3 D = Vector3.forward * densityFieldZ;
 
-        Gizmos.DrawLine(A, B);
-        Gizmos.DrawLine(B, C);
-        Gizmos.DrawLine(C, D);
-        Gizmos.DrawLine(D, A);
-
+            Gizmos.DrawLine(A, B);
+            Gizmos.DrawLine(B, C);
+            Gizmos.DrawLine(C, D);
+            Gizmos.DrawLine(D, A);
+        }
     }
 
     //---------------------------------------------------------------------
@@ -101,45 +108,54 @@ public class Granulator : MonoBehaviour
          */
 
 
+        if (useDensityField)
+        {
+            return GetPosFromHeightMap();
+        }
+        else
+        {
+            // alternatively I could spawn them randomly around a "spawnpoint" ?
+            Vector3 jit = new Vector3(
+                Random.Range(-pos3DJit, pos3DJit),
+                Random.Range(-pos3DJit, pos3DJit),
+                Random.Range(-pos3DJit, pos3DJit)
+                );
 
-        // alternatively I could spawn them randomly around a "spawnpoint" ?
-        Vector3 jit = new Vector3(
-            Random.Range(-pos3DJit, pos3DJit),
-            Random.Range(-pos3DJit, pos3DJit),
-            Random.Range(-pos3DJit, pos3DJit)
-            );
+
+            // for now just return parent position
+            return transform.position + jit;
+        }
 
 
-        // for now just return parent position
-        //return transform.position+jit;
-
-
-        return GetPosFromHeightMap();
 
     }
 
     //---------------------------------------------------------------------
     Vector3 GetPosFromHeightMap()
     {
-        Vector3 ret = Vector3.zero;
-        int n = 0;
-        int x, z;
-        float p;
-        while (n < (heightmap.width * heightmap.height))
+        if (densityFieldTexture)
         {
-            x = (Random.Range(0,heightmap.width));
-            z = (Random.Range(0,heightmap.height));
-            p = Random.value;
-
-            if (p < heightmap.GetPixel(x, z).grayscale)
+            Vector3 ret = Vector3.zero;
+            int n = 0;
+            int x, z;
+            float p;
+            while (n < (densityFieldTexture.width * densityFieldTexture.height))
             {
-                ret.x = heightMapX-(float) x / heightmap.width * heightMapX;
-                ret.z = heightMapZ-(float) z / heightmap.height * heightMapZ;
-                break;
+                x = (Random.Range(0, densityFieldTexture.width));
+                z = (Random.Range(0, densityFieldTexture.height));
+                p = Random.value;
+
+                if (p < densityFieldTexture.GetPixel(x, z).grayscale)
+                {
+                    ret.x = densityfieldX - (float)x / densityFieldTexture.width * densityfieldX;
+                    ret.z = densityFieldZ - (float)z / densityFieldTexture.height * densityFieldZ;
+                    break;
+                }
+                n++;
             }
-            n++;
+            return ret;
         }
-        return ret;
+        else return Vector3.zero;
     }
 
 
@@ -157,6 +173,7 @@ public class Granulator : MonoBehaviour
             GameObject tmp = Instantiate(grainPrefab); //, this.transform);
             grains[i] = tmp.GetComponent<Grain>();
             grains[i].audioClip = audioClip;
+            grains[i].transform.position = transform.position;
             // grains[i].updatePos = updateGrainPos;
         }
     }
@@ -205,10 +222,11 @@ public class Granulator : MonoBehaviour
         // so we get instant pitch updates, and not just for newly spawned grains
         for (int i = 0; i < grains.Length; i++)
         {
-            grains[i].grainPitch = newGrainPitch;
+            // updating pitch like this introduces crackle
+            // grains[i].grainPitch = newGrainPitch;
 
             // update Grain position:
-            if (moveGrains) grains[i].UpdatePosition(GetGrainPosition());
+            if (moveGrains) grains[i].UpdatePosition(GetGrainPosition(), true);
 
 
         }
