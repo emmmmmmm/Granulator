@@ -13,6 +13,7 @@ public class Grain : MonoBehaviour
     public float grainPitch;
     private float grainPitchRand;
     private float grainVol;
+    private Vector3 grainTransform;
     private float grainAttack = 0.1f;
     private float grainRelease = 0.1f;
     public AudioClip audioClip;
@@ -21,18 +22,27 @@ public class Grain : MonoBehaviour
     private float[] grainSamples;
     private int channels;
     private int currentIndex = -1;
+    private Granulator granulator;
+
+
+    private MeshRenderer body;
+
+    public float posUpdateSpeed = 10;
 
     //---------------------------------------------------------------------
     void Start()
     {
         UpdateGrain();
-        this.gameObject.AddComponent<AudioSource>();
+        gameObject.AddComponent<AudioSource>();
         audioSource = GetComponent<AudioSource>();
         audioSource.spatialize = false;
         audioSource.spatialBlend = 0;
         audioSource.clip = null;
+        granulator = GetComponentInParent<Granulator>();
+        body = GetComponentInChildren<MeshRenderer>();
     }
     //---------------------------------------------------------------------
+    // called if audio file changes
     public void UpdateGrain()
     {
         samples = new float[audioClip.samples * audioClip.channels];
@@ -43,11 +53,15 @@ public class Grain : MonoBehaviour
     void Update()
     {
         audioSource.pitch = grainPitch + grainPitchRand;
+        transform.position = grainTransform;
+        if (isPlaying)  { body.enabled = true; body.gameObject.SetActive(true); }
+        else            { body.enabled = false; body.gameObject.SetActive(false); }
     }
     //---------------------------------------------------------------------
-    public void NewGrain(int newGrainPos, int newGrainLength, float newGrainPitch, float newGrainPitchRand, float newGrainVol, float newGrainAttack, float newGrainRelease, Vector3 pos)
+    public void NewGrain(Vector3 newGrainTransform, int newGrainPos, int newGrainLength, float newGrainPitch, float newGrainPitchRand, float newGrainVol, float newGrainAttack, float newGrainRelease, Vector3 pos)
     {
         grainPos = (int)((newGrainPos / channels)) * channels; // rounding to make sure pos always starts at first channel!
+        grainTransform = newGrainTransform;
         grainLength = newGrainLength;
         grainPitch = newGrainPitch;
         grainPitchRand = newGrainPitchRand;
@@ -56,6 +70,16 @@ public class Grain : MonoBehaviour
         grainRelease = newGrainRelease;
         isPlaying = true;
         BuildSamplesAR();
+
+
+    }
+    //---------------------------------------------------------------------
+    public void UpdatePosition(Vector3 pos, bool lerpPos = false)
+    {
+        if (lerpPos)
+            grainTransform = Vector3.Lerp(transform.position, pos, posUpdateSpeed * Time.deltaTime);
+        else
+            grainTransform = pos;
     }
     //---------------------------------------------------------------------
     private void BuildSamplesAR()
@@ -99,7 +123,6 @@ public class Grain : MonoBehaviour
         {
             currentIndex = -1;
             isPlaying = false;
-
         }
         currentIndex++;
         return grainSamples[currentIndex];
