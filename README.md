@@ -25,3 +25,4 @@ Another application would be sound design for very dynamic engine sounds. All yo
 
 ### Known issues:
 . there is still some crackling happening when there are fast changes in pitch.
+. it is possible to use a "density map" to change the probability of where grains spawn, it works but could need a cleaner implementation.
